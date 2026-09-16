@@ -11,14 +11,63 @@ export class TrendAnalysisStrategy implements AuditStrategy {
     transactions: Transaction[],
     customParam?: string,
   ): Promise<string> {
-    // TODO: Feature 3 - Implement this strategy.
-    // 1. Call HistoricalDataService.getHistoricalAverages() asynchronously.
-    // 2. Group current expenses (amount < 0) by category and compute category totals.
-    // 3. For each category, compare current total spending against the historical average.
-    // 4. Calculate the rate of change / variance percentage: ((current - historical) / historical) * 100.
-    // 5. Highlight any category with a variance exceeding +/- 20%.
-    // 6. Format and return a text-based audit report detailing comparison metrics.
+        const historical = await HistoricalDataService.getHistoricalAverages();
+        const VARIANCE_THRESHOLD = 20;
 
-    throw new Error('Method not implemented.');
+    const totals: Record<string, number> = {};
+    for (const t of transactions) {
+      if (t.amount < 0) {
+        totals[t.category] = (totals[t.category] ?? 0) + Math.abs(t.amount);
+      }
+    }
+
+    const categories = Object.keys(totals).sort();
+
+    if (categories.length === 0) {
+      return '=== Historical Trend Auditor Report ===\n\nNo expense transactions found for this period.';
+    }
+
+    const rows: string[] = [
+      'Category            Current       Historical    % Change',
+      '---------------------------------------------------------',
+    ];
+    const growth: string[] = [];
+    const savings: string[] = [];
+
+    for (const category of categories) {
+      const current = totals[category];
+      const avg = historical[category];
+      const currentStr = `$${current.toFixed(2)}`;
+
+      if (avg === undefined) {
+        rows.push(`${category.padEnd(20)}${currentStr.padEnd(14)}N/A           N/A`);
+        continue;
+      }
+
+      const variance = ((current - avg) / avg) * 100;
+      const sign = variance >= 0 ? '+' : '';
+      const avgStr = `$${avg.toFixed(2)}`;
+      const varStr = `${sign}${variance.toFixed(2)}%`;
+
+      rows.push(`${category.padEnd(20)}${currentStr.padEnd(14)}${avgStr.padEnd(14)}${varStr}`);
+
+      const detail = `  - ${category}: ${varStr} (${currentStr} vs ${avgStr} average)`;
+      if (variance > VARIANCE_THRESHOLD) growth.push(detail);
+      if (variance < -VARIANCE_THRESHOLD) savings.push(detail);
+    }
+
+    return [
+      '=== Historical Trend Auditor Report ===',
+      '',
+      'Category Comparison (Current vs. Historical Average):',
+      ...rows,
+      '',
+      `Significant Growth Categories (> +${VARIANCE_THRESHOLD}%):`,
+      growth.length ? growth.join('\n') : '  None',
+      '',
+      `Significant Savings Categories (< -${VARIANCE_THRESHOLD}%):`,
+      savings.length ? savings.join('\n') : '  None',
+    ].join('\n');
+  
   }
 }
