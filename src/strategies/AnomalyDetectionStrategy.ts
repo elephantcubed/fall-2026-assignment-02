@@ -32,8 +32,9 @@ export class AnomalyDetectionStrategy implements AuditStrategy {
     }
     
     const duplicateGroups = [...groups.values()].filter((group) => group.length > 1);
+
     // 4. Identify transactions having a status that matches any in rules.flaggedStatuses.
-    hey guys im testing something out here'
+    const flagged = transactions.filter((t) => rules.flaggedStatuses.includes(t.status));
 
     // 5. Calculate total flagged value and anomaly rates.
 
