@@ -37,11 +37,11 @@ describe('AnomalyDetectionStrategy (Feature 2)', () => {
     { id: '101', date: '2026-06-01', amount: -450.0, category: 'Travel', description: 'Flight', status: 'completed' },
     { id: '102', date: '2026-06-02', amount: 500.0, category: 'Income', description: 'Bonus', status: 'completed' }, // positive amount, abs value exceeds threshold
  
-    // Duplicate set (pair)
+    // Duplicates
     { id: '103', date: '2026-06-03', amount: -12.5, category: 'Food', description: 'Coffee', status: 'completed' },
     { id: '104', date: '2026-06-03', amount: -12.5, category: 'Food', description: 'Coffee', status: 'completed' },
  
-    // Flagged by status (two distinct flagged statuses)
+    // Flagged
     { id: '105', date: '2026-06-04', amount: -60.0, category: 'Misc', description: 'Subscription', status: 'flagged' },
     { id: '106', date: '2026-06-04', amount: -90.0, category: 'Misc', description: 'Membership', status: 'review' },
   ];
@@ -51,7 +51,6 @@ describe('AnomalyDetectionStrategy (Feature 2)', () => {
   beforeEach(() => {
     strategy = new AnomalyDetectionStrategy();
     vi.restoreAllMocks();
-    // Set up in beforeEach so every test has the mock in place before execute() runs.
     vi.spyOn(AnomalyRulesService, 'getRules').mockResolvedValue(mockRules);
   });
  
@@ -61,7 +60,7 @@ describe('AnomalyDetectionStrategy (Feature 2)', () => {
     expect(AnomalyRulesService.getRules).toHaveBeenCalled();
     expect(result).toContain('Outliers (more than $300)');
     expect(result).toContain('Flight');
-    expect(result).toContain('Bonus'); // positive amount, but abs(500) still exceeds the threshold
+    expect(result).toContain('Bonus'); 
     expect(result).not.toContain('Lunch');
     expect(result).not.toContain('Snack');
   });
@@ -71,7 +70,6 @@ describe('AnomalyDetectionStrategy (Feature 2)', () => {
  
     expect(result).toContain('Set 1:');
     expect(result).toContain('Coffee');
-    // Only one duplicate group exists in the dataset.
     expect(result).not.toContain('Set 2:');
   });
  
